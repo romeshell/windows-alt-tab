@@ -5,6 +5,7 @@ const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
 const Lang = imports.lang;
 const Main = imports.ui.main;
+const Meta = imports.gi.Meta;
 const Mainloop = imports.mainloop;
 const ModalDialog = imports.ui.modalDialog;
 const Shell = imports.gi.Shell;
@@ -81,6 +82,60 @@ AltTabPopupW.prototype = {
                          });
         return true;
     },
+    
+    
+    _keyPressEvent : function(actor, event) {
+        let keysym = event.get_key_symbol();
+        let event_state = Shell.get_event_state(event);
+        let backwards = event_state & Clutter.ModifierType.SHIFT_MASK;
+        let action = global.display.get_keybinding_action(event.get_key_code(), event_state);
+
+        this._disableHover();
+
+        if(action == Meta.KeyBindingAction.WORKSPACE_LEFT) {
+            this.destroy();
+            this.actionMoveWorkspaceLeft();
+            new AltTabPopupW().show();
+        } else if(action == Meta.KeyBindingAction.WORKSPACE_RIGHT) {
+            this.destroy();
+            this.actionMoveWorkspaceRight();
+            new AltTabPopupW().show();
+        } else if(action == Meta.KeyBindingAction.WORKSPACE_DOWN) {
+            this.destroy();
+            this.actionMoveWorkspaceDown();
+            new AltTabPopupW().show();
+        } else if(action == Meta.KeyBindingAction.WORKSPACE_TOP) {
+            this.destroy();
+            this.actionMoveWorkspaceUp();
+            new AltTabPopupW().show();
+        } else if (keysym == Clutter.Escape) {
+            this.destroy();
+        } else if (action == Meta.KeyBindingAction.SWITCH_GROUP) {
+            this._select(this._currentApp, backwards ? this._previousWindow() : this._nextWindow());
+        } else if (action == Meta.KeyBindingAction.SWITCH_GROUP_BACKWARD) {
+            this._select(this._currentApp, this._previousWindow());
+        } else if (action == Meta.KeyBindingAction.SWITCH_WINDOWS) {
+            this._select(backwards ? this._previousApp() : this._nextApp());
+        } else if (action == Meta.KeyBindingAction.SWITCH_WINDOWS_BACKWARD) {
+            this._select(this._previousApp());
+        } else if (this._thumbnailsFocused) {
+            if (keysym == Clutter.Left)
+                this._select(this._currentApp, this._previousWindow());
+            else if (keysym == Clutter.Right)
+                this._select(this._currentApp, this._nextWindow());
+            else if (keysym == Clutter.Up)
+                this._select(this._currentApp, null, true);
+        } else {
+            if (keysym == Clutter.Left)
+                this._select(this._previousApp());
+            else if (keysym == Clutter.Right)
+                this._select(this._nextApp());
+            else if (keysym == Clutter.Down)
+                this._select(this._currentApp, 0);
+        }
+
+        return true;
+    },
 
     _keyReleaseEvent : function(actor, event) {
         let [x, y, mods] = global.get_pointer();
@@ -94,8 +149,53 @@ AltTabPopupW.prototype = {
         let app = this._appIcons[this._currentApp];
         Main.activateWindow(app.cachedWindows[0]);
         this.destroy();
-    }
+    },
 
+    actionMoveWorkspaceLeft: function() {
+        let rtl = (St.Widget.get_default_direction() == St.TextDirection.RTL);
+        let activeWorkspaceIndex = global.screen.get_active_workspace_index();
+        let indexToActivate = activeWorkspaceIndex;
+        if (rtl && activeWorkspaceIndex < global.screen.n_workspaces - 1)
+            indexToActivate++;
+        else if (!rtl && activeWorkspaceIndex > 0)
+            indexToActivate--;
+
+        if (indexToActivate != activeWorkspaceIndex)
+            global.screen.get_workspace_by_index(indexToActivate).activate(global.get_current_time());
+    },
+
+    actionMoveWorkspaceRight: function() {
+        let rtl = (St.Widget.get_default_direction() == St.TextDirection.RTL);
+        let activeWorkspaceIndex = global.screen.get_active_workspace_index();
+        let indexToActivate = activeWorkspaceIndex;
+        if (rtl && activeWorkspaceIndex > 0)
+            indexToActivate--;
+        else if (!rtl && activeWorkspaceIndex < global.screen.n_workspaces - 1)
+            indexToActivate++;
+
+        if (indexToActivate != activeWorkspaceIndex)
+            global.screen.get_workspace_by_index(indexToActivate).activate(global.get_current_time());
+    },
+
+    actionMoveWorkspaceUp: function() {
+        let activeWorkspaceIndex = global.screen.get_active_workspace_index();
+        let indexToActivate = activeWorkspaceIndex;
+        if (activeWorkspaceIndex > 0)
+            indexToActivate--;
+
+        if (indexToActivate != activeWorkspaceIndex)
+            global.screen.get_workspace_by_index(indexToActivate).activate(global.get_current_time());
+    },
+
+    actionMoveWorkspaceDown: function() {
+        let activeWorkspaceIndex = global.screen.get_active_workspace_index();
+        let indexToActivate = activeWorkspaceIndex;
+        if (activeWorkspaceIndex < global.screen.n_workspaces - 1)
+            indexToActivate++;
+
+        if (indexToActivate != activeWorkspaceIndex)
+            global.screen.get_workspace_by_index(indexToActivate).activate(global.get_current_time());
+    }
 };
 
 function AppIcon(app, window) {

@@ -4,5 +4,5 @@
 "description": "A replacement for Alt-Tab, allows to cycle between windows of current workspace",
 "shell-version": [ "3.2" ],
 "url": "https://github.com/tglman/gnome-shell/extensions/",
-"version": 1
+"version": 2
 }
