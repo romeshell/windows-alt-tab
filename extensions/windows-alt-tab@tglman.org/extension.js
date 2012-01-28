@@ -104,7 +104,7 @@ AltTabPopupW.prototype = {
             this.destroy();
             this.actionMoveWorkspaceDown();
             new AltTabPopupW().show();
-        } else if(action == Meta.KeyBindingAction.WORKSPACE_TOP) {
+        } else if(action == Meta.KeyBindingAction.WORKSPACE_UP) {
             this.destroy();
             this.actionMoveWorkspaceUp();
             new AltTabPopupW().show();
