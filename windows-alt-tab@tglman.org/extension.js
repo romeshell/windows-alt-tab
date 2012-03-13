@@ -1,19 +1,18 @@
+const Main = imports.ui.main;
+const Meta = imports.gi.Meta;
+
 const AltTab = imports.ui.altTab;
 const Clutter = imports.gi.Clutter;
 const Gdk = imports.gi.Gdk;
 const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
 const Lang = imports.lang;
-const Main = imports.ui.main;
-const Meta = imports.gi.Meta;
 const Mainloop = imports.mainloop;
 const ModalDialog = imports.ui.modalDialog;
 const Shell = imports.gi.Shell;
 const St = imports.gi.St;
 const Tweener = imports.ui.tweener;
 const WindowManager = imports.ui.windowManager;
-
-const N_ = function(e) { return e };
 
 const POPUP_FADE_TIME = 0.0; // seconds
 
@@ -86,7 +85,7 @@ AltTabPopupW.prototype = {
     
     _keyPressEvent : function(actor, event) {
         let keysym = event.get_key_symbol();
-        let event_state = Shell.get_event_state(event);
+        let event_state = event.get_state();
         let backwards = event_state & Clutter.ModifierType.SHIFT_MASK;
         let action = global.display.get_keybinding_action(event.get_key_code(), event_state);
 
@@ -315,15 +314,15 @@ function doAltTab(shellwm, binding, window, backwards) {
 }
 
 function enable() {
-    Main.wm.setKeybindingHandler('switch_windows', doAltTab);
-    Main.wm.setKeybindingHandler('switch_group', doAltTab);
-    Main.wm.setKeybindingHandler('switch_windows_backward', doAltTab);
-    Main.wm.setKeybindingHandler('switch_group_backward', doAltTab);
+    Meta.keybindings_set_custom_handler('switch-windows', doAltTab);
+    Meta.keybindings_set_custom_handler('switch-group', doAltTab);
+    Meta.keybindings_set_custom_handler('switch-windows-backward', doAltTab);
+    Meta.keybindings_set_custom_handler('switch-group-backward', doAltTab);
 }
 
 function disable() {
-    Main.wm.setKeybindingHandler('switch_windows', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
-    Main.wm.setKeybindingHandler('switch_group', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
-    Main.wm.setKeybindingHandler('switch_windows_backward', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
-    Main.wm.setKeybindingHandler('switch_group_backward', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
+    Meta.keybindings_set_custom_handler('switch-windows',Lang.bind(Main.wm, Main.wm._startAppSwitcher));
+    Meta.keybindings_set_custom_handler('switch-group',Lang.bind(Main.wm, Main.wm._startAppSwitcher));
+    Meta.keybindings_set_custom_handler('switch-windows-backward',Lang.bind(Main.wm, Main.wm._startAppSwitcher));
+    Meta.keybindings_set_custom_handler('switch-group-backward',Lang.bind(Main.wm, Main.wm._startAppSwitcher));
 }

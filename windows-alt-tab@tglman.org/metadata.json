@@ -2,7 +2,7 @@
 "uuid": "windows-alt-tab@tglman.org",
 "name": "Windows Alt Tab",
 "description": "A replacement for Alt-Tab, allows to cycle between windows of current workspace",
-"shell-version": [ "3.2" ],
+"shell-version": [ "3.3.90" , "3.4" ],
 "url": "https://github.com/tglman/gnome-shell/extensions/",
-"version": 3
+"version": 1
 }
