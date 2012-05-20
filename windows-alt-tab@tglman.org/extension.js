@@ -228,7 +228,28 @@ AppIcon.prototype = {
             this.label = new St.Label({ text: this.app.get_name() });
             this.actor.add(this.label, { x_fill: false });
         }
+    },
+    
+    set_size: function(size) {
+    	if(false) {
+	        this.icon = this.app.create_icon_texture(size);
+        } else {
+	        let mutterWindow = this.cachedWindows[0].get_compositor_private();
+            if (!mutterWindow)
+                return;
+        	let windowTexture = mutterWindow.get_texture ();
+            let [width, height] = windowTexture.get_size();
+            let scale = Math.min(1.0, size / width, size / height);
+            this.icon = new Clutter.Clone ({ source: windowTexture,
+                                                reactive: true,
+                                                width: width * scale,
+                                                height: height * scale });
+             
+        }
+        this._iconBin.set_size(size, size);
+        this._iconBin.child = this.icon;
     }
+
 };
 
 function WindowSwitcher(apps, altTabPopup) {
@@ -289,7 +310,8 @@ WindowSwitcher.prototype = {
             this._scrollToRight();
         else if (absItemX < 0)
             this._scrollToLeft();
-
+        let app = this.icons[index];
+        Main.activateWindow(app.cachedWindows[0]);
     },
 
     _isWindowOnWorkspace: function(w, workspace) {
