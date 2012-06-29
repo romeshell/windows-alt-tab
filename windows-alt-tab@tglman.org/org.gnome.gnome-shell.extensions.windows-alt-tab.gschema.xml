@@ -1,0 +1,25 @@
+<schemalist gettext-domain="gnome-shell-extensions">
+	<enum id="org.gnome.shell.extensions.windows-alt-tab.preview-style">
+		<value value="0" nick="none"/>
+		<value value="1" nick="bring-to-front"/>
+	</enum>
+	<enum id="org.gnome.shell.extensions.windows-alt-tab.icon-style">
+		<value value="0" nick="icon"/>
+		<value value="1" nick="window"/>
+	</enum>
+	<schema id="org.gnome.shell.extensions.windows-alt-tab" path="/org/gnome/shell/extensions/windows-alt-tab/">
+		<key name="preview-mode" enum="org.gnome.shell.extensions.windows-alt-tab.preview-style">
+			<default>'none'</default>
+			<summary>Choose the action when go over an alt tab chooser icon</summary>
+		</key>
+		<key name="icon-mode" enum="org.gnome.shell.extensions.windows-alt-tab.icon-style">
+			<default>'icon'</default>
+			<summary>Choose the thumb mode of alt tab chooser</summary>
+		</key>
+		<key name="window-size" type="i">
+		      <default>100</default>
+		      <summary>Size of window preview</summary>
+		      <description>Size of window preview in pixel</description>
+		</key>
+	</schema>
+</schemalist>

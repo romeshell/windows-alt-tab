@@ -14,6 +14,12 @@ const St = imports.gi.St;
 const Tweener = imports.ui.tweener;
 const WindowManager = imports.ui.windowManager;
 
+const SETTINGS_SCHEMA = 'windows-alt-tab';
+
+let extension = imports.misc.extensionUtils.getCurrentExtension();
+let convenience = extension.imports.convenience;
+let Schema;
+
 const POPUP_FADE_TIME = 0.0; // seconds
 
 
@@ -231,7 +237,7 @@ AppIcon.prototype = {
     },
     
     set_size: function(size) {
-    	if(false) {
+        if(Schema.get_enum("icon-mode") == 0) {
 	        this.icon = this.app.create_icon_texture(size);
         } else {
 	        let mutterWindow = this.cachedWindows[0].get_compositor_private();
@@ -310,8 +316,10 @@ WindowSwitcher.prototype = {
             this._scrollToRight();
         else if (absItemX < 0)
             this._scrollToLeft();
-        let app = this.icons[index];
-        Main.activateWindow(app.cachedWindows[0]);
+        if(Schema.get_enum("preview-mode") == 1) {
+        	let app = this.icons[index];
+        	Main.activateWindow(app.cachedWindows[0]);
+        }
     },
 
     _isWindowOnWorkspace: function(w, workspace) {
@@ -325,10 +333,58 @@ WindowSwitcher.prototype = {
         let t2 = appIcon2.cachedWindows[0].get_user_time();
         if (t2 > t1) return 1;
         else return -1;
-    }
+    },
+    
+    _getPreferredHeight: function (actor, forWidth, alloc) {
+        let j = 0;
+        while(this._items.length > 1 && this._items[j].style_class != 'item-box') {
+                j++;
+        }
+        let themeNode = this._items[j].get_theme_node();
+        let iconPadding = themeNode.get_horizontal_padding();
+        let iconBorder = themeNode.get_border_width(St.Side.LEFT) + themeNode.get_border_width(St.Side.RIGHT);
+        let [iconMinHeight, iconNaturalHeight] = this.icons[j].label.get_preferred_height(-1);
+        let iconSpacing = iconNaturalHeight + iconPadding + iconBorder;
+        let totalSpacing = this._list.spacing * (this._items.length - 1);
+        if (this._separator)
+           totalSpacing += this._separator.width + this._list.spacing;
+
+        // We just assume the whole screen here due to weirdness happing with the passed width
+        let primary = Main.layoutManager.primaryMonitor;
+        let parentPadding = this.actor.get_parent().get_theme_node().get_horizontal_padding();
+        let availWidth = primary.width - parentPadding - this.actor.get_theme_node().get_horizontal_padding();
+        let height = 0;
+		let iconSizes =AltTab.iconSizes;
+        if(Schema.get_enum("icon-mode") == 1) {
+        	iconSizes =[Schema.get_int("window-size")];
+        }
+        for(let i =  0; i < iconSizes.length; i++) {
+                this._iconSize = iconSizes[i];
+                height = iconSizes[i] + iconSpacing;
+                let w = height * this._items.length + totalSpacing;
+                if (w <= availWidth)
+                        break;
+        }
+
+        if (this._items.length == 1) {
+            this._iconSize = iconSizes[0];
+            height = iconSizes[0] + iconSpacing;
+        }
+
+        for(let i = 0; i < this.icons.length; i++) {
+            if (this.icons[i].icon != null)
+                break;
+            this.icons[i].set_size(this._iconSize);
+        }
+
+        alloc.min_size = height;
+        alloc.natural_size = height;
+    },
+    
 };
 
 function init(metadata) {
+    Schema = convenience.getSettings(extension, SETTINGS_SCHEMA);
 }
 
 function doAltTab(shellwm, binding, window, backwards) {
