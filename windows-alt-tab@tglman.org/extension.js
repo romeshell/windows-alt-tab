@@ -69,7 +69,9 @@ AltTabPopupW.prototype = {
         } else if (backward) {
             this._select(this._appIcons.length - 1);
         } else {
-            this._select(1);
+            if (this._appIcons.length > 0) {
+                this._select(1);
+            }
         }
 
         let [x, y, mods] = global.get_pointer();
@@ -152,7 +154,9 @@ AltTabPopupW.prototype = {
 
     _finish : function() {
         let app = this._appIcons[this._currentApp];
-        Main.activateWindow(app.cachedWindows[0]);
+        if (app) {
+            Main.activateWindow(app.cachedWindows[0]);
+        }
         this.destroy();
     },
 
@@ -294,6 +298,10 @@ WindowSwitcher.prototype = {
     },
 
     highlight: function(index, justOutline) {
+        if (!this._items[index]) {
+            return;
+        }
+
         if (this._highlighted != -1) {
             this._items[this._highlighted].remove_style_pseudo_class('outlined');
             this._items[this._highlighted].remove_style_pseudo_class('selected');
