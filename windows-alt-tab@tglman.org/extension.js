@@ -348,6 +348,7 @@ WindowSwitcher.prototype = {
         while(this._items.length > 1 && this._items[j].style_class != 'item-box') {
                 j++;
         }
+	if(!this._items[j])return;
         let themeNode = this._items[j].get_theme_node();
         let iconPadding = themeNode.get_horizontal_padding();
         let iconBorder = themeNode.get_border_width(St.Side.LEFT) + themeNode.get_border_width(St.Side.RIGHT);
