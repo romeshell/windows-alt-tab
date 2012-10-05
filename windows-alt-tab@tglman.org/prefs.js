@@ -58,9 +58,15 @@ const App = new Lang.Class({
         this.sizespin.set_range(0, 1000);
         this.sizespin.set_increments(1, -1);
         Schema.bind("window-size", this.sizespin, 'value', Gio.SettingsBindFlags.DEFAULT);
-        
+
+        this.workspace = new Gtk.CheckButton({label: "Workspace navigation"});
+        this.workspace.connect('toggled', function(owner){
+                        Schema.set_boolean("workspace-navigation", owner.get_active() );
+            });
+
         this.main_vbox.add(this.actorIcon);
         this.main_vbox.add(this.sizeactor);
+        this.main_vbox.add(this.workspace);
         this.main_vbox.show_all();
 	}
 });
