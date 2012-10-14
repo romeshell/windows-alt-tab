@@ -28,10 +28,11 @@ const AltTabPopupW = new Lang.Class({
 
     _init: function(index) {
        this._index = index;
+       this._modifierMask=0;
        this.parent();
     },
 
-    show : function(backward, switch_group) {
+    show : function(backward, binding, mask) {
         let appSys = Shell.AppSystem.get_default();
         let apps = appSys.get_running ();
 
@@ -41,6 +42,7 @@ const AltTabPopupW = new Lang.Class({
         if (!Main.pushModal(this.actor))
             return false;
         this._haveModal = true;
+	this._modifierMask = AltTab.primaryModifier(mask);
 
         this.actor.connect('key-press-event', Lang.bind(this, this._keyPressEvent));
         this.actor.connect('key-release-event', Lang.bind(this, this._keyReleaseEvent));
@@ -56,23 +58,14 @@ const AltTabPopupW = new Lang.Class({
         this._appIcons = this._appSwitcher.icons;
 
         // Make the initial selection
-        if (switch_group) {
-            if (backward) {
-                this._select(0, this._appIcons[0].cachedWindows.length - 1);
-            } else {
-                if (this._appIcons[0].cachedWindows.length > 1)
-                    this._select(0, 1);
-                else
-                    this._select(0, 0);
-            }
-        } else if (this._appIcons.length == 1) {
+        if (this._appIcons.length == 1) {
             this._select(0);
         } else if (backward) {
             this._select(this._appIcons.length - 1);
         } else {
             if (this._appIcons.length > 0 && this._index == 0) {
                 this._select(1);
-            } else
+            } else if(this._appIcons.length > 0)
 		this._select(0);
         }
 
@@ -104,19 +97,19 @@ const AltTabPopupW = new Lang.Class({
         if(action == Meta.KeyBindingAction.WORKSPACE_LEFT) {
             this.destroy();
             this.actionMoveWorkspaceLeft();
-            new AltTabPopupW(0).show();
+            new AltTabPopupW(0).show(backwards,"",event_state);
         } else if(action == Meta.KeyBindingAction.WORKSPACE_RIGHT) {
             this.destroy();
             this.actionMoveWorkspaceRight();
-            new AltTabPopupW(0).show();
+            new AltTabPopupW(0).show(backwards,"",event_state);
         } else if(action == Meta.KeyBindingAction.WORKSPACE_DOWN) {
             this.destroy();
             this.actionMoveWorkspaceDown();
-            new AltTabPopupW(0).show();
+            new AltTabPopupW(0).show(backwards,"",event_state);
         } else if(action == Meta.KeyBindingAction.WORKSPACE_UP) {
             this.destroy();
             this.actionMoveWorkspaceUp();
-            new AltTabPopupW(0).show();
+            new AltTabPopupW(0).show(backwards,"",event_state);
         } else if (keysym == Clutter.Escape) {
             this.destroy();
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP) {
@@ -146,13 +139,13 @@ const AltTabPopupW = new Lang.Class({
                     let idx = this._index - 1;
                     if (global.screen.get_active_workspace_index() + idx >= 0) {
                         this.destroy();
-                        new AltTabPopupW(idx).show();
+                        new AltTabPopupW(idx).show(backwards,"",event_state);
                     }
                 } else if (keysym == Clutter.Down) {
                     let idx = this._index + 1;
                     if (global.screen.get_active_workspace_index() + idx + 1 < global.screen.n_workspaces) {
                         this.destroy();
-                        new AltTabPopupW(idx).show();
+                        new AltTabPopupW(idx).show(backwards,"",event_state);
                     }
                 }
             }
@@ -163,8 +156,9 @@ const AltTabPopupW = new Lang.Class({
 
     _keyReleaseEvent : function(actor, event) {
         let [x, y, mods] = global.get_pointer();
-        if (!(mods & Gdk.ModifierType.MOD1_MASK))
-            this._finish();
+        let state = mods & this._modifierMask;
+	if (state == 0)
+		 this._finish();
 
         return true;
     },
@@ -415,8 +409,10 @@ function init(metadata) {
     Schema = convenience.getSettings(extension, SETTINGS_SCHEMA);
 }
 
-function doAltTab(shellwm, binding, window, backwards) {
-    new AltTabPopupW(0).show();
+function doAltTab(display, screen, window, binding) {
+    let modifiers = binding.get_modifiers()
+    let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
+    new AltTabPopupW(0).show(backwards, binding.get_name(), binding.get_mask());
 }
 
 function enable() {
