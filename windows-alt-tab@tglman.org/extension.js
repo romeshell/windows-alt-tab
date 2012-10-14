@@ -178,7 +178,7 @@ const AltTabPopupW = new Lang.Class({
     },
 
     actionMoveWorkspaceLeft: function() {
-        let rtl = (St.Widget.get_default_direction() == St.TextDirection.RTL);
+        let rtl = (Clutter.get_default_text_direction() == Clutter.TextDirection.RTL);
         let activeWorkspaceIndex = global.screen.get_active_workspace_index();
         let indexToActivate = activeWorkspaceIndex;
         if (rtl && activeWorkspaceIndex < global.screen.n_workspaces - 1)
@@ -191,7 +191,7 @@ const AltTabPopupW = new Lang.Class({
     },
 
     actionMoveWorkspaceRight: function() {
-        let rtl = (St.Widget.get_default_direction() == St.TextDirection.RTL);
+        let rtl = (Clutter.get_default_text_direction() == Clutter.TextDirection.RTL);
         let activeWorkspaceIndex = global.screen.get_active_workspace_index();
         let indexToActivate = activeWorkspaceIndex;
         if (rtl && activeWorkspaceIndex > 0)
