@@ -22,13 +22,14 @@ let Schema;
 
 const POPUP_FADE_TIME = 0.0; // seconds
 
+const AltTabPopupW = new Lang.Class({
+    Name: 'AltTabPopupW',
+    Extends: AltTab.AltTabPopup,
 
-function AltTabPopupW() {
-    this._init();
-}
-
-AltTabPopupW.prototype = {
-    __proto__ : AltTab.AltTabPopup.prototype,
+    _init: function(index) {
+       this._index = index;
+       this.parent();
+    },
 
     show : function(backward, switch_group) {
         let appSys = Shell.AppSystem.get_default();
@@ -47,7 +48,7 @@ AltTabPopupW.prototype = {
         this.actor.connect('button-press-event', Lang.bind(this, this._clickedOutside));
         this.actor.connect('scroll-event', Lang.bind(this, this._onScroll));
 
-        this._appSwitcher = new WindowSwitcher(apps, this);
+        this._appSwitcher = new WindowSwitcher(apps, this, this._index);
         this.actor.add_actor(this._appSwitcher.actor);
         this._appSwitcher.connect('item-activated', Lang.bind(this, this._appActivated));
         this._appSwitcher.connect('item-entered', Lang.bind(this, this._appEntered));
@@ -69,9 +70,10 @@ AltTabPopupW.prototype = {
         } else if (backward) {
             this._select(this._appIcons.length - 1);
         } else {
-            if (this._appIcons.length > 0) {
+            if (this._appIcons.length > 0 && this._index == 0) {
                 this._select(1);
-            }
+            } else
+		this._select(0);
         }
 
         let [x, y, mods] = global.get_pointer();
@@ -102,19 +104,19 @@ AltTabPopupW.prototype = {
         if(action == Meta.KeyBindingAction.WORKSPACE_LEFT) {
             this.destroy();
             this.actionMoveWorkspaceLeft();
-            new AltTabPopupW().show();
+            new AltTabPopupW(0).show();
         } else if(action == Meta.KeyBindingAction.WORKSPACE_RIGHT) {
             this.destroy();
             this.actionMoveWorkspaceRight();
-            new AltTabPopupW().show();
+            new AltTabPopupW(0).show();
         } else if(action == Meta.KeyBindingAction.WORKSPACE_DOWN) {
             this.destroy();
             this.actionMoveWorkspaceDown();
-            new AltTabPopupW().show();
+            new AltTabPopupW(0).show();
         } else if(action == Meta.KeyBindingAction.WORKSPACE_UP) {
             this.destroy();
             this.actionMoveWorkspaceUp();
-            new AltTabPopupW().show();
+            new AltTabPopupW(0).show();
         } else if (keysym == Clutter.Escape) {
             this.destroy();
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP) {
@@ -137,8 +139,23 @@ AltTabPopupW.prototype = {
                 this._select(this._previousApp());
             else if (keysym == Clutter.Right)
                 this._select(this._nextApp());
-            else if (keysym == Clutter.Down)
+            else if (keysym == Clutter.Down && !Schema.get_boolean("workspace-navigation"))
                 this._select(this._currentApp, 0);
+            else if (Schema.get_boolean("workspace-navigation")) {
+                if (keysym == Clutter.Up) {
+                    let idx = this._index - 1;
+                    if (global.screen.get_active_workspace_index() + idx >= 0) {
+                        this.destroy();
+                        new AltTabPopupW(idx).show();
+                    }
+                } else if (keysym == Clutter.Down) {
+                    let idx = this._index + 1;
+                    if (global.screen.get_active_workspace_index() + idx + 1 < global.screen.n_workspaces) {
+                        this.destroy();
+                        new AltTabPopupW(idx).show();
+                    }
+                }
+            }
         }
 
         return true;
@@ -205,7 +222,7 @@ AltTabPopupW.prototype = {
         if (indexToActivate != activeWorkspaceIndex)
             global.screen.get_workspace_by_index(indexToActivate).activate(global.get_current_time());
     }
-};
+});
 
 function AppIcon(app, window) {
     this._init(app, window);
@@ -262,17 +279,19 @@ AppIcon.prototype = {
 
 };
 
-function WindowSwitcher(apps, altTabPopup) {
-    this._init(apps, altTabPopup);
+function WindowSwitcher(apps, altTabPopup, index) {
+    this._init(apps, altTabPopup, index);
 }
 
 WindowSwitcher.prototype = {
     __proto__ : AltTab.AppSwitcher.prototype,
 
-    _init : function(apps, altTabPopup) {
+    _init : function(apps, altTabPopup, index) {
         AltTab.SwitcherList.prototype._init.call(this, true);
 
-        let activeWorkspace = global.screen.get_active_workspace();
+        this._index = global.screen.get_active_workspace_index() + index;
+
+        let activeWorkspace = global.screen.get_workspace_by_index(this._index);
         let workspaceIcons = [];
         for (let i = 0; i < apps.length; i++) {
             let windows = apps[i].get_windows();
@@ -397,7 +416,7 @@ function init(metadata) {
 }
 
 function doAltTab(shellwm, binding, window, backwards) {
-    new AltTabPopupW().show();
+    new AltTabPopupW(0).show();
 }
 
 function enable() {

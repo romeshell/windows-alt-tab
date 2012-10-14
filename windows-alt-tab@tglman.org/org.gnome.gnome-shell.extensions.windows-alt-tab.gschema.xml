@@ -21,5 +21,10 @@
 		      <summary>Size of window preview</summary>
 		      <description>Size of window preview in pixel</description>
 		</key>
+		<key name="workspace-navigation" type="b">
+			<default>false</default>
+			<summary>Workspace navigation support</summary>
+			<description>Use up and down keys to switch to windows of other workspace without actually switching workspace</description>
+		</key>
 	</schema>
 </schemalist>
