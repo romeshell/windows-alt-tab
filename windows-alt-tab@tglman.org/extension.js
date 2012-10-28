@@ -70,7 +70,7 @@ const AltTabPopupW = new Lang.Class({
         }
 
         let [x, y, mods] = global.get_pointer();
-        if (!(mods & Gdk.ModifierType.MOD1_MASK)) {
+        if (!(mods & this._modifierMask)) {
             this._finish();
             return false;
         }
