@@ -52,7 +52,7 @@ const AltTabPopupW = new Lang.Class({
 
         this._appSwitcher = new WindowSwitcher(apps, this, this._index);
         this.actor.add_actor(this._appSwitcher.actor);
-        this._appSwitcher.connect('item-activated', Lang.bind(this, this._appActivated));
+        this._appSwitcher.connect('item-activated', Lang.bind(this, this._finish));
         this._appSwitcher.connect('item-entered', Lang.bind(this, this._appEntered));
 
         this._appIcons = this._appSwitcher.icons;
