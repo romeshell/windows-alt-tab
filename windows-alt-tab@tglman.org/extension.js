@@ -30,6 +30,7 @@ const AltTabPopupW = new Lang.Class({
        this._index = index;
        this._modifierMask=0;
        this.parent();
+       this.previewActor=null;
     },
 
     show : function(backward, binding, mask) {
@@ -256,12 +257,12 @@ AppIcon.prototype = {
 	        this.icon = this.app.create_icon_texture(size);
         } else {
 	        let mutterWindow = this.cachedWindows[0].get_compositor_private();
-            if (!mutterWindow)
-                return;
-        	let windowTexture = mutterWindow.get_texture ();
-            let [width, height] = windowTexture.get_size();
-            let scale = Math.min(1.0, size / width, size / height);
-            this.icon = new Clutter.Clone ({ source: windowTexture,
+		if (!mutterWindow)
+                	return;
+		let windowTexture = mutterWindow.get_texture ();
+		let [width, height] = windowTexture.get_size();
+		let scale = Math.min(1.0, size / width, size / height);
+		this.icon = new Clutter.Clone ({ source: windowTexture,
                                                 reactive: true,
                                                 width: width * scale,
                                                 height: height * scale });
@@ -339,7 +340,30 @@ WindowSwitcher.prototype = {
             this._scrollToLeft();
         if(Schema.get_enum("preview-mode") == 1) {
         	let app = this.icons[index];
-        	Main.activateWindow(app.cachedWindows[0]);
+		if(this.previewActor) {
+			this.previewActor.destroy();
+			this.previewActor=null;
+		}
+
+        	//Main.activateWindow(app.cachedWindows[0]);
+		let mutterWindow = app.cachedWindows[0].get_compositor_private();
+		if (!mutterWindow)
+		return;
+		let windowTexture = mutterWindow.get_texture (); 
+		let [width, height] = windowTexture.get_size();
+		let [posX, posY] = windowTexture.get_transformed_position();
+		var preview = new Clutter.Clone ({ source: windowTexture,
+						reactive: true,
+						width: width,
+						height: height}); 
+		this.previewActor = new Shell.GenericContainer({name:'altTabWindowPreview',reactive:true,visible:false});
+		this.previewActor.set_position(posX,posY);
+		this.previewActor.add_actor(preview);
+		Main.uiGroup.add_actor(this.previewActor);
+		Main.pushModal(this.previewActor);
+		this.previewActor.show();
+		this.previewActor.get_allocation_box();
+		
         }
     },
 
