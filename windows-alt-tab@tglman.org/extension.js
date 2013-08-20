@@ -30,7 +30,6 @@ const AltTabPopupW = new Lang.Class({
        this._index = index;
        this._modifierMask=0;
        this.parent();
-       this.previewActor=null;
     },
 
     show : function(backward, binding, mask) {
@@ -78,6 +77,7 @@ const AltTabPopupW = new Lang.Class({
 
         this.actor.opacity = 0;
         this.actor.show();
+	
         Tweener.addTween(this.actor,
                          { opacity: 255,
                            time: POPUP_FADE_TIME,
@@ -153,6 +153,15 @@ const AltTabPopupW = new Lang.Class({
         }
 
         return true;
+    },
+
+    destroy : function() {
+	if(this._appSwitcher.previewActor)
+	{
+		this._appSwitcher.previewActor.destroy();
+		this._appSwitcher.previewActor=undefined;
+	}
+	AltTab.AltTabPopup.prototype.destroy.call(this);
     },
 
     _keyReleaseEvent : function(actor, event) {
@@ -342,10 +351,8 @@ WindowSwitcher.prototype = {
         	let app = this.icons[index];
 		if(this.previewActor) {
 			this.previewActor.destroy();
-			this.previewActor=null;
+			this.previewActor=undefined;
 		}
-
-        	//Main.activateWindow(app.cachedWindows[0]);
 		let mutterWindow = app.cachedWindows[0].get_compositor_private();
 		if (!mutterWindow)
 		return;
@@ -356,14 +363,11 @@ WindowSwitcher.prototype = {
 						reactive: true,
 						width: width,
 						height: height}); 
-		this.previewActor = new Shell.GenericContainer({name:'altTabWindowPreview',reactive:true,visible:false});
-		this.previewActor.set_position(posX,posY);
+		this.previewActor = new St.Widget({name:'altTabWindowPreview',x:posX,y:posY,width:width,height:height,reactive:false});
 		this.previewActor.add_actor(preview);
-		Main.uiGroup.add_actor(this.previewActor);
-		Main.pushModal(this.previewActor);
-		this.previewActor.show();
-		this.previewActor.get_allocation_box();
 		
+		Main.uiGroup.add_actor(this.previewActor);
+		this._altTabPopup.actor.raise_top();
         }
     },
 
